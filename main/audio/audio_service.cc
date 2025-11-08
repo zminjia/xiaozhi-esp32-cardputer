@@ -222,6 +222,10 @@ void AudioService::AudioInputTask() {
                 }
                 PushTaskToEncodeQueue(kAudioTaskTypeEncodeToTestingQueue, std::move(data));
                 continue;
+            } else {
+                // If ReadAudioData fails, continue waiting for next event
+                vTaskDelay(pdMS_TO_TICKS(10));
+                continue;
             }
         }
 
@@ -232,6 +236,10 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     wake_word_->Feed(data);
+                    continue;
+                } else {
+                    // If ReadAudioData fails, continue waiting for next event
+                    vTaskDelay(pdMS_TO_TICKS(10));
                     continue;
                 }
             }
@@ -244,6 +252,10 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     audio_processor_->Feed(std::move(data));
+                    continue;
+                } else {
+                    // If ReadAudioData fails, continue waiting for next event
+                    vTaskDelay(pdMS_TO_TICKS(10));
                     continue;
                 }
             }
