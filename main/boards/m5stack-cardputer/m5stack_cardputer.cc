@@ -6,12 +6,12 @@
 #include "button.h"
 #include "config.h"
 #include "backlight.h"
+#include "wifi_manager.h"
 
 #include <esp_log.h>
 #include <driver/spi_common.h>
 #include <driver/gpio.h>
 #include <driver/ledc.h>
-#include <wifi_station.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
@@ -102,9 +102,11 @@ private:
         ESP_LOGI(TAG, "Initializing buttons");
         boot_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
-            if (app.GetDeviceState() == kDeviceStateStarting && 
-                !WifiStation::GetInstance().IsConnected()) {
-                ResetWifiConfiguration();
+            if (app.GetDeviceState() == kDeviceStateStarting) {
+                auto* wifi_board = dynamic_cast<WifiBoard*>(&Board::GetInstance());
+                if (wifi_board && !WifiManager::GetInstance().IsConnected()) {
+                    wifi_board->EnterWifiConfigMode();
+                }
             }
             app.ToggleChatState();
         });
